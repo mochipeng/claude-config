@@ -22,6 +22,29 @@ def get_client() -> AsyncGroq:
     return AsyncGroq()   # reads GROQ_API_KEY from env
 
 
+async def call_model(
+    client: AsyncGroq,
+    system: str,
+    user: str,
+    model: str = SMART_MODEL,
+    max_tokens: int = 1024,
+) -> str:
+    """Single-turn LLM call with no tools. Used for extraction / structured output."""
+    while True:
+        try:
+            response = await client.chat.completions.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user",   "content": user},
+                ],
+            )
+            return response.choices[0].message.content or ""
+        except RateLimitError as e:
+            await asyncio.sleep(_rate_limit_wait(e))
+
+
 async def run_agent(
     client: AsyncGroq,
     system: str,
