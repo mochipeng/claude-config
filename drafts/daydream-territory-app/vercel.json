@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/territory.py": {
+      "maxDuration": 30
+    }
+  }
+}

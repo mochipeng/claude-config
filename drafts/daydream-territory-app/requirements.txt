@@ -1,0 +1,2 @@
+anthropic>=0.40.0
+googlemaps>=4.10.0

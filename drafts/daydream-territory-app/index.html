@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DayDream Dental — Territory Scanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d0d0d;
+      color: #e8e8e8;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    #header {
+      background: #111;
+      border-bottom: 1px solid #1e1e1e;
+      padding: 11px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .logo { color: #ff6b6b; font-weight: 600; font-size: 14px; letter-spacing: 0.3px; }
+    .logo-sep { color: #2a2a2a; margin: 0 2px; }
+    .logo-sub { color: #555; font-size: 13px; }
+    .header-pill {
+      margin-left: auto;
+      background: rgba(255, 107, 107, 0.12);
+      color: #ff6b6b;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── Main layout ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 360px;
+      flex-shrink: 0;
+      background: #111;
+      border-right: 1px solid #1e1e1e;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Search section ── */
+    #search-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+    .field-label {
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    #city-input {
+      width: 100%;
+      background: #161616;
+      border: 1px solid #252525;
+      border-radius: 6px;
+      color: #e8e8e8;
+      font-size: 13px;
+      padding: 8px 11px;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s;
+    }
+    #city-input:focus { border-color: #ff6b6b; }
+    #city-input::placeholder { color: #383838; }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    #radius-select {
+      background: #161616;
+      border: 1px solid #252525;
+      border-radius: 6px;
+      color: #e8e8e8;
+      font-size: 13px;
+      padding: 7px 9px;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #radius-select:focus { border-color: #ff6b6b; }
+    #scan-btn {
+      flex: 1;
+      background: #ff6b6b;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    #scan-btn:hover:not(:disabled) { background: #ff5252; }
+    #scan-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Status bar ── */
+    #status-bar {
+      padding: 8px 16px;
+      font-size: 11px;
+      color: #555;
+      border-bottom: 1px solid #1a1a1a;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .dot { animation: blink 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+    /* ── Error banner ── */
+    #error-banner {
+      display: none;
+      padding: 8px 16px;
+      background: rgba(220, 50, 50, 0.12);
+      border-bottom: 1px solid rgba(220, 50, 50, 0.25);
+      font-size: 11px;
+      color: #f88;
+      line-height: 1.4;
+    }
+
+    /* ── Stats summary ── */
+    #stats-bar {
+      display: none;
+      padding: 8px 16px;
+      border-bottom: 1px solid #1a1a1a;
+      display: none;
+      gap: 12px;
+      align-items: center;
+    }
+    .stat-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .stat-pill.hot    { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+    .stat-pill.warm   { background: rgba(255,169,77,0.15);  color: #ffa94d; }
+    .stat-pill.res    { background: rgba(232,212,77,0.15);  color: #e8d44d; }
+    .stat-total { font-size: 11px; color: #555; margin-left: auto; }
+
+    /* ── Legend ── */
+    #legend {
+      padding: 10px 16px;
+      border-bottom: 1px solid #1a1a1a;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .leg {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #555;
+    }
+    .leg-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Practice list ── */
+    #practice-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    #practice-list::-webkit-scrollbar { width: 3px; }
+    #practice-list::-webkit-scrollbar-track { background: #111; }
+    #practice-list::-webkit-scrollbar-thumb { background: #252525; border-radius: 2px; }
+
+    .practice-card {
+      padding: 11px 16px;
+      border-bottom: 1px solid #161616;
+      cursor: pointer;
+      transition: background 0.12s;
+      border-left: 2px solid transparent;
+    }
+    .practice-card:hover { background: #151515; }
+    .practice-card.active {
+      background: #181210;
+      border-left-color: #ff6b6b;
+      padding-left: 14px;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin-bottom: 7px;
+    }
+    .card-rank {
+      font-size: 10px;
+      color: #3a3a3a;
+      font-weight: 600;
+      min-width: 18px;
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+    .card-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #ddd;
+      line-height: 1.3;
+      flex: 1;
+    }
+    .card-score {
+      font-size: 18px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .score-track {
+      height: 2px;
+      background: #1e1e1e;
+      border-radius: 1px;
+      margin: 0 0 7px 27px;
+    }
+    .score-fill {
+      height: 2px;
+      border-radius: 1px;
+      transition: width 0.6s ease;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-left: 27px;
+    }
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .badge.hot    { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+    .badge.warm   { background: rgba(255,169,77,0.15);  color: #ffa94d; }
+    .badge.res    { background: rgba(232,212,77,0.15);  color: #e8d44d; }
+    .badge.skip   { background: rgba(100,100,100,0.12); color: #666; }
+    .badge.dso    { background: rgba(180,60,60,0.15);   color: #c55; }
+    .card-rating  { font-size: 10px; color: #444; }
+
+    .card-addr {
+      font-size: 10px;
+      color: #444;
+      margin: 4px 0 0 27px;
+      line-height: 1.4;
+    }
+    .card-signals {
+      margin: 5px 0 0 27px;
+    }
+    .signal {
+      font-size: 10px;
+      color: #555;
+      padding: 1px 0;
+    }
+    .signal::before { content: '· '; color: #333; }
+
+    /* ── Empty state ── */
+    #empty-state {
+      padding: 48px 20px;
+      text-align: center;
+      color: #333;
+    }
+    .empty-icon { font-size: 28px; margin-bottom: 14px; }
+    .empty-title { font-size: 13px; color: #444; font-weight: 500; margin-bottom: 6px; }
+    .empty-desc { font-size: 11px; color: #333; line-height: 1.6; }
+
+    /* ── Loading state ── */
+    #loading-state {
+      display: none;
+      padding: 48px 20px;
+      text-align: center;
+      color: #333;
+    }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #222;
+      border-top-color: #ff6b6b;
+      border-radius: 50%;
+      margin: 0 auto 14px;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title { font-size: 13px; color: #555; font-weight: 500; margin-bottom: 6px; }
+    .loading-desc  { font-size: 11px; color: #3a3a3a; line-height: 1.6; }
+
+    /* ── Map ── */
+    #map { flex: 1; }
+
+    /* ── Info window override ── */
+    .gm-style-iw-c {
+      background: #1a1a1a !important;
+      border-radius: 6px !important;
+      padding: 0 !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+    }
+    .gm-style-iw-d { overflow: hidden !important; }
+    .gm-style-iw-tc::after { background: #1a1a1a !important; }
+    .gm-ui-hover-effect { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <span class="logo">◆ DayDream Dental</span>
+  <span class="logo-sep">—</span>
+  <span class="logo-sub">Territory Scanner</span>
+  <span class="header-pill">Powered by Claude AI</span>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+
+    <!-- Search -->
+    <div id="search-section">
+      <div class="field-label">Target City</div>
+      <input type="text" id="city-input" placeholder="Chicago, IL" value="Chicago, IL" autocomplete="off">
+      <div class="search-row">
+        <select id="radius-select">
+          <option value="5">5 mi</option>
+          <option value="10" selected>10 mi</option>
+          <option value="15">15 mi</option>
+          <option value="25">25 mi</option>
+        </select>
+        <button id="scan-btn" onclick="scanTerritory()">Scan Territory</button>
+      </div>
+    </div>
+
+    <div id="error-banner"></div>
+
+    <!-- Status -->
+    <div id="status-bar">Enter a city and click Scan Territory.</div>
+
+    <!-- Stats (shown after scan) -->
+    <div id="stats-bar"></div>
+
+    <!-- Legend -->
+    <div id="legend">
+      <div class="leg"><div class="leg-dot" style="background:#ff6b6b"></div>Hot Lead</div>
+      <div class="leg"><div class="leg-dot" style="background:#ffa94d"></div>Warm Lead</div>
+      <div class="leg"><div class="leg-dot" style="background:#e8d44d"></div>Research</div>
+      <div class="leg"><div class="leg-dot" style="background:#3a3a3a"></div>Skip</div>
+      <div class="leg"><div class="leg-dot" style="background:transparent;border:2px solid #a78bfa;width:9px;height:9px"></div>Study Club</div>
+    </div>
+
+    <!-- Practice list -->
+    <div id="practice-list">
+      <div id="empty-state">
+        <div class="empty-icon">◎</div>
+        <div class="empty-title">No results yet</div>
+        <div class="empty-desc">Enter a city above and click<br>Scan Territory to find independent<br>dental practices worth calling.</div>
+      </div>
+      <div id="loading-state">
+        <div class="spinner"></div>
+        <div class="loading-title">Scanning territory…</div>
+        <div class="loading-desc">Discovering practices via Google Maps<br>and scoring each one with Claude AI.<br>Takes about 15–20 seconds.</div>
+      </div>
+    </div>
+
+    <!-- Study club list -->
+    <div id="club-section" style="display:none;border-top:1px solid #1e1e1e">
+      <div style="padding:10px 16px 6px;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;font-weight:500">
+        Community Channels · Study Clubs
+      </div>
+      <div id="club-list"></div>
+    </div>
+
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let map, infoWindow;
+  let markers = [];
+  let clubMarkers = [];
+  let practices = [];
+  let clubs = [];
+  let activePractice = -1;
+
+  const COLORS = {
+    'Hot Lead':  '#ff6b6b',
+    'Warm Lead': '#ffa94d',
+    'Research':  '#e8d44d',
+    'Skip':      '#3a3a3a',
+  };
+
+  const BADGE_CLASS = {
+    'Hot Lead':  'hot',
+    'Warm Lead': 'warm',
+    'Research':  'res',
+    'Skip':      'skip',
+  };
+
+  // ── Map init ───────────────────────────────────────────────────────────────
+  function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: 39.5, lng: -98.35 },
+      zoom: 4,
+      styles: [
+        { elementType: 'geometry',            stylers: [{ color: '#1a1a1a' }] },
+        { elementType: 'labels.text.fill',    stylers: [{ color: '#757575' }] },
+        { elementType: 'labels.text.stroke',  stylers: [{ color: '#212121' }] },
+        { featureType: 'administrative',      elementType: 'geometry',           stylers: [{ color: '#757575' }] },
+        { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+        { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
+        { featureType: 'poi',                 elementType: 'labels.text.fill',   stylers: [{ color: '#757575' }] },
+        { featureType: 'poi.park',            elementType: 'geometry',           stylers: [{ color: '#181818' }] },
+        { featureType: 'road',                elementType: 'geometry.fill',      stylers: [{ color: '#2c2c2c' }] },
+        { featureType: 'road',                elementType: 'labels.text.fill',   stylers: [{ color: '#8a8a8a' }] },
+        { featureType: 'road.arterial',       elementType: 'geometry',           stylers: [{ color: '#373737' }] },
+        { featureType: 'road.highway',        elementType: 'geometry',           stylers: [{ color: '#3c3c3c' }] },
+        { featureType: 'road.highway.controlled_access', elementType: 'geometry', stylers: [{ color: '#4e4e4e' }] },
+        { featureType: 'transit',             elementType: 'labels.text.fill',   stylers: [{ color: '#757575' }] },
+        { featureType: 'water',               elementType: 'geometry',           stylers: [{ color: '#000000' }] },
+        { featureType: 'water',               elementType: 'labels.text.fill',   stylers: [{ color: '#3d3d3d' }] },
+      ],
+      disableDefaultUI: false,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: true,
+    });
+    infoWindow = new google.maps.InfoWindow({ maxWidth: 280 });
+  }
+
+  // ── Markers ────────────────────────────────────────────────────────────────
+  function clearMarkers() {
+    markers.forEach(m => m && m.setMap(null));
+    markers = [];
+    clubMarkers.forEach(m => m && m.setMap(null));
+    clubMarkers = [];
+  }
+
+  function markerIcon(color, scale = 13) {
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale,
+      fillColor: color,
+      fillOpacity: 0.92,
+      strokeColor: '#ffffff',
+      strokeWeight: 1.5,
+    };
+  }
+
+  function addMarker(p, index) {
+    if (!p.lat || !p.lng) { markers.push(null); return; }
+    const color = COLORS[p.priority] || '#3a3a3a';
+    const marker = new google.maps.Marker({
+      position: { lat: p.lat, lng: p.lng },
+      map,
+      icon: markerIcon(color),
+      title: p.name,
+      zIndex: p.total_score,
+    });
+    marker.addListener('click', () => selectPractice(index));
+    markers.push(marker);
+  }
+
+  function clubMarkerIcon(scale = 11) {
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale,
+      fillColor: '#a78bfa',
+      fillOpacity: 0.15,
+      strokeColor: '#a78bfa',
+      strokeWeight: 2,
+    };
+  }
+
+  function addClubMarker(c, index) {
+    if (!c.lat || !c.lng) { clubMarkers.push(null); return; }
+    const marker = new google.maps.Marker({
+      position: { lat: c.lat, lng: c.lng },
+      map,
+      icon: clubMarkerIcon(),
+      title: c.name,
+      zIndex: 5,
+    });
+    marker.addListener('click', () => selectClub(index));
+    clubMarkers.push(marker);
+  }
+
+  function selectClub(index) {
+    const c = clubs[index];
+    // Highlight sidebar card
+    document.querySelectorAll('.club-card').forEach(el => el.classList.remove('active'));
+    const card = document.querySelector(`.club-card[data-ci="${index}"]`);
+    if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+
+    if (clubMarkers[index]) {
+      clubMarkers[index].setIcon(clubMarkerIcon(15));
+      clubMarkers[index].setZIndex(1000);
+    }
+
+    if (c.lat && c.lng) {
+      const contactLine = [
+        c.phone ? `<span>${c.phone}</span>` : '',
+        c.website ? `<a href="${c.website}" target="_blank" style="color:#a78bfa;text-decoration:none">${c.website.replace(/^https?:\/\//, '').split('/')[0]}</a>` : '',
+      ].filter(Boolean).join('  ·  ');
+
+      infoWindow.setContent(`
+        <div style="background:#1a1a1a;padding:14px;font-family:'Inter',sans-serif;border-radius:6px;min-width:200px">
+          <div style="font-size:10px;color:#a78bfa;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Community Channel · Study Club</div>
+          <div style="font-weight:600;font-size:13px;color:#e8e8e8;margin-bottom:4px;line-height:1.3">${c.name}</div>
+          <div style="font-size:10px;color:#555;margin-bottom:10px">${(c.address || '').replace(/, USA$/, '')}</div>
+          <div style="font-size:11px;color:#888;line-height:1.5;margin-bottom:8px">Sponsorship opportunity: offer to sponsor lunch + 20-min talk on AI billing. Under $500/event.</div>
+          ${contactLine ? `<div style="font-size:10px;color:#555">${contactLine}</div>` : ''}
+        </div>`);
+      infoWindow.open(map, clubMarkers[index]);
+      map.panTo({ lat: c.lat, lng: c.lng });
+    }
+  }
+
+  // ── Selection ──────────────────────────────────────────────────────────────
+  function selectPractice(index) {
+    // Deselect old
+    if (activePractice >= 0) {
+      const prev = document.querySelector(`.practice-card[data-i="${activePractice}"]`);
+      if (prev) prev.classList.remove('active');
+      if (markers[activePractice]) {
+        const pp = practices[activePractice];
+        markers[activePractice].setIcon(markerIcon(COLORS[pp.priority] || '#3a3a3a', 13));
+        markers[activePractice].setZIndex(pp.total_score);
+      }
+    }
+
+    activePractice = index;
+
+    const card = document.querySelector(`.practice-card[data-i="${index}"]`);
+    if (card) {
+      card.classList.add('active');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    const p = practices[index];
+    const color = COLORS[p.priority] || '#3a3a3a';
+
+    if (markers[index]) {
+      markers[index].setIcon(markerIcon(color, 17));
+      markers[index].setZIndex(1000);
+    }
+
+    if (p.lat && p.lng) {
+      const rows = [
+        { label: 'Independence',       score: p.independence_score,        max: 40, evidence: p.independence_evidence },
+        { label: 'Practice Size',      score: p.size_score,                max: 30, evidence: p.size_evidence },
+        { label: 'Billing Complexity', score: p.billing_complexity_score,  max: 20, evidence: p.billing_evidence },
+        { label: 'Review Activity',    score: p.velocity_score,            max: 10, evidence: p.most_recent_review_days != null ? `Last review ${p.most_recent_review_days}d ago` : 'No recent review data' },
+      ];
+      const scoreBreakdown = `
+        <div style="margin-bottom:10px">
+          ${rows.map(r => `
+            <div style="margin-bottom:6px">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+                <span style="color:#666">${r.label}</span>
+                <span style="color:#aaa;font-weight:600">${r.score}/${r.max}</span>
+              </div>
+              <div style="background:#252525;border-radius:2px;height:3px;margin-bottom:3px">
+                <div style="background:#555;height:3px;border-radius:2px;width:${Math.round(r.score/r.max*100)}%"></div>
+              </div>
+              ${r.evidence ? `<div style="font-size:9px;color:#444;line-height:1.4">${r.evidence}</div>` : ''}
+            </div>`).join('')}
+        </div>`;
+
+      const signals = p.key_signals.slice(0, 3)
+        .map(s => `<div style="font-size:10px;color:#666;padding:1px 0">· ${s}</div>`)
+        .join('');
+
+      const dsoWarning = p.is_dso
+        ? `<div style="font-size:10px;color:#c44;margin-bottom:8px;padding:4px 8px;background:rgba(180,50,50,0.15);border-radius:3px">⚠ DSO — not a DayDream target</div>`
+        : '';
+
+      const contactLine = [
+        p.phone ? `<span>${p.phone}</span>` : '',
+        p.website ? `<a href="${p.website}" target="_blank" style="color:#ff6b6b;text-decoration:none">${p.website.replace(/^https?:\/\//, '').split('/')[0]}</a>` : '',
+      ].filter(Boolean).join('  ·  ');
+
+      infoWindow.setContent(`
+        <div style="background:#1a1a1a;padding:14px;font-family:'Inter',sans-serif;border-radius:6px;min-width:220px">
+          <div style="font-weight:600;font-size:13px;color:#e8e8e8;margin-bottom:2px;line-height:1.3">${p.name}</div>
+          <div style="font-size:10px;color:#555;margin-bottom:10px">${p.address.replace(/, USA$/, '')}</div>
+          ${dsoWarning}
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:26px;font-weight:700;color:${color}">${p.total_score}</span>
+            <div>
+              <div style="font-size:11px;color:${color};font-weight:600">${p.priority}</div>
+              <div style="font-size:10px;color:#555">DSO Risk: ${p.dso_risk}</div>
+            </div>
+          </div>
+          ${scoreBreakdown}
+          ${signals ? `<div style="margin-bottom:8px">${signals}</div>` : ''}
+          ${contactLine ? `<div style="font-size:10px;color:#444;margin-top:8px">${contactLine}</div>` : ''}
+        </div>`);
+
+      infoWindow.open(map, markers[index]);
+      map.panTo({ lat: p.lat, lng: p.lng });
+    }
+  }
+
+  // ── Render results ─────────────────────────────────────────────────────────
+  function renderResults(data) {
+    practices = data.practices || [];
+    clubs     = data.clubs     || [];
+    clearMarkers();
+    activePractice = -1;
+
+    const list = document.getElementById('practice-list');
+
+    if (practices.length === 0) {
+      list.innerHTML = `
+        <div id="empty-state">
+          <div class="empty-icon">◎</div>
+          <div class="empty-title">No practices found</div>
+          <div class="empty-desc">Try a larger radius or a different city.</div>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = practices.map((p, i) => {
+      const color    = COLORS[p.priority] || '#3a3a3a';
+      const bcls     = BADGE_CLASS[p.priority] || 'skip';
+      const dsoBadge = p.is_dso ? `<span class="badge dso">DSO</span>` : '';
+      const addr     = (p.address || '').replace(/, USA$/, '');
+      const signals  = (p.key_signals || []).slice(0, 2)
+        .map(s => `<div class="signal">${s}</div>`).join('');
+
+      return `
+        <div class="practice-card" data-i="${i}" onclick="selectPractice(${i})">
+          <div class="card-top">
+            <div class="card-rank">${p.rank}</div>
+            <div class="card-name">${p.name}</div>
+            <div class="card-score" style="color:${color}">${p.total_score}</div>
+          </div>
+          <div class="score-track">
+            <div class="score-fill" style="width:${p.total_score}%;background:${color}"></div>
+          </div>
+          <div class="card-meta">
+            <span class="badge ${bcls}">${p.priority}</span>
+            ${dsoBadge}
+            ${p.rating ? `<span class="card-rating">★ ${p.rating} (${p.review_count})</span>` : ''}
+          </div>
+          ${addr ? `<div class="card-addr">${addr}</div>` : ''}
+          ${signals ? `<div class="card-signals">${signals}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    // Add markers
+    practices.forEach((p, i) => addMarker(p, i));
+
+    // Add club markers
+    clubs.forEach((c, i) => addClubMarker(c, i));
+
+    // Fit bounds to all points (practices + clubs)
+    const allPoints = [
+      ...practices.filter(p => p.lat && p.lng),
+      ...clubs.filter(c => c.lat && c.lng),
+    ];
+    if (allPoints.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      allPoints.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+      map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+    }
+
+    // Stats bar
+    const hot   = practices.filter(p => p.priority === 'Hot Lead').length;
+    const warm  = practices.filter(p => p.priority === 'Warm Lead').length;
+    const res   = practices.filter(p => p.priority === 'Research').length;
+    const stats = document.getElementById('stats-bar');
+    stats.style.display = 'flex';
+    stats.innerHTML = `
+      ${hot  ? `<span class="stat-pill hot">${hot} Hot</span>`  : ''}
+      ${warm ? `<span class="stat-pill warm">${warm} Warm</span>` : ''}
+      ${res  ? `<span class="stat-pill res">${res} Research</span>` : ''}
+      <span class="stat-total">${practices.length} practices</span>
+      ${clubs.length ? `<span class="stat-pill" style="background:rgba(167,139,250,0.15);color:#a78bfa">${clubs.length} clubs</span>` : ''}`;
+
+    // Render club section
+    const clubSection = document.getElementById('club-section');
+    const clubList    = document.getElementById('club-list');
+    if (clubs.length > 0) {
+      clubSection.style.display = 'block';
+      clubList.innerHTML = clubs.map((c, i) => {
+        const addr = (c.address || '').replace(/, USA$/, '');
+        const site = c.website
+          ? `<a href="${c.website}" target="_blank" style="color:#a78bfa;text-decoration:none;font-size:10px">${c.website.replace(/^https?:\/\//, '').split('/')[0]}</a>`
+          : '';
+        return `
+          <div class="club-card practice-card" data-ci="${i}" onclick="selectClub(${i})"
+               style="border-left-color:transparent">
+            <div class="card-top">
+              <div class="card-rank" style="color:#a78bfa">◎</div>
+              <div class="card-name" style="color:#ccc">${c.name}</div>
+            </div>
+            ${addr ? `<div class="card-addr">${addr}</div>` : ''}
+            ${site ? `<div style="margin:3px 0 0 27px">${site}</div>` : ''}
+          </div>`;
+      }).join('');
+    } else {
+      clubSection.style.display = 'none';
+    }
+  }
+
+  // ── Scan ──────────────────────────────────────────────────────────────────
+  async function scanTerritory() {
+    const city   = (document.getElementById('city-input').value || '').trim();
+    const radius = document.getElementById('radius-select').value;
+    if (!city) return;
+
+    // UI: loading
+    document.getElementById('scan-btn').disabled = true;
+    document.getElementById('scan-btn').textContent = 'Scanning…';
+    document.getElementById('error-banner').style.display = 'none';
+    document.getElementById('stats-bar').style.display = 'none';
+    document.getElementById('club-section').style.display = 'none';
+    document.getElementById('status-bar').innerHTML =
+      `Scanning ${city} <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>`;
+    document.getElementById('practice-list').innerHTML = `
+      <div id="loading-state" style="display:block;padding:48px 20px;text-align:center">
+        <div class="spinner"></div>
+        <div class="loading-title">Scanning territory…</div>
+        <div class="loading-desc">Discovering practices via Google Maps<br>and scoring each one with Claude AI.<br>Takes about 15–20 seconds.</div>
+      </div>`;
+
+    try {
+      const url = `/api/territory?city=${encodeURIComponent(city)}&radius=${encodeURIComponent(radius)}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok || data.error) throw new Error(data.error || `API error ${res.status}`);
+
+      const count = (data.practices || []).length;
+      const hot   = (data.practices || []).filter(p => p.priority === 'Hot Lead').length;
+      document.getElementById('status-bar').textContent =
+        `${count} practices · ${hot} hot lead${hot !== 1 ? 's' : ''} · ${city}`;
+      renderResults(data);
+
+    } catch (err) {
+      const banner = document.getElementById('error-banner');
+      banner.textContent = `Scan failed: ${err.message}`;
+      banner.style.display = 'block';
+      document.getElementById('status-bar').textContent = 'Scan failed.';
+      document.getElementById('practice-list').innerHTML = `
+        <div id="empty-state">
+          <div class="empty-icon">◎</div>
+          <div class="empty-title">Scan failed</div>
+          <div class="empty-desc">Check the error above.</div>
+        </div>`;
+    } finally {
+      document.getElementById('scan-btn').disabled = false;
+      document.getElementById('scan-btn').textContent = 'Scan Territory';
+    }
+  }
+
+  // Enter key triggers scan
+  document.getElementById('city-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') scanTerritory();
+  });
+</script>
+
+<!-- Replace with your Maps API key restricted to your domain -->
+<script
+  async
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1NfNRkHAptlOmyeU16BEXyJ0ZloMcgBk&callback=initMap"
+  onerror="document.getElementById('map').innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#555;font-size:13px;font-family:Inter,sans-serif\'>Maps failed to load — check API key</div>'">
+</script>
+
+</body>
+</html>
